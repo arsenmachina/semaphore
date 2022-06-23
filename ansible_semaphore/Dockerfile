@@ -1,0 +1,6 @@
+FROM ansiblesemaphore/semaphore
+
+
+
+
+
