@@ -6,14 +6,14 @@ networks:
    ipam:
     driver: default
     config:
-     - subnet: 172.22.0.0/24 
+     - subnet: 172.22.0.0/16
 
 services:
   mysql: 
    build: ./mysql
    ports:
     - 3306:3306
-   container_name: mysql
+   container_name: semaphore_mysql
    hostname: mysql
    environment:
      MYSQL_ROOT_PASSWORD: 1234
@@ -21,26 +21,29 @@ services:
      MYSQL_USER: semaphore_user
      MYSQL_PASSWORD: 1234
    volumes:
-     - ./mysql/.data/db:/var/lib/mysql
-     - ./mysql/.data/logs:/var/log/mysql:rw
+     - ./mysql/.data/db/:/var/lib/mysql
+     - ./mysql/.data/logs/:/var/log/mysql:rw
    networks:
     an_semaphore:
      ipv4_address: 172.22.0.111
   
   semaphore:
-   build: ./ansible
+   build: ./ansible_semaphore
    ports:
     - 3000:3000
+   container_name: ansible_semaphore
    environment:
      SEMAPHORE_DB_USER: semaphore_user
      SEMAPHORE_DB_PASS: 1234
      SEMAPHORE_DB_HOST: 172.22.0.111
      SEMAPHORE_DB_PORT: 3306
      SEMAPHORE_DB: semaphore_db
-     SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore/
+     SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore_playbooks/
      SEMAPHORE_ADMIN_PASSWORD: 1234
      SEMAPHORE_ADMIN_NAME: admin
      SEMAPHORE_ADMIN: admin
+   volumes:
+    - ./ansible_semaphore/playbooks:/tmp/semaphore_playbooks
    networks:
     an_semaphore:
      ipv4_address: 172.22.0.112

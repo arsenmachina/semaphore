@@ -1,0 +1,60 @@
+---
+- name: configure firewall
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+
+#############################################################     Debian Block     ##############################################################################################
+
+#Install ufw
+  - name: Configure OS family Debian (Install ufw)
+    apt:
+     name: ufw
+     state: latest
+    when: ansible_os_family == "Debian"
+#Start and enable service ufw
+  - name: Configure OS family Debian (ufw enabled)  
+    community.general.ufw:
+      state: "enabled"
+      policy: "deny"
+      logging: "on"
+    when: ansible_os_family == "Debian"
+#Open TCP/UDP ports
+  - name: Configure OS family Debian (ufw rules)
+    shell: ufw allow 22,80,443,179,5473,6443,8472,2376,8472,2379:2380,9099,10250:10252,10254/tcp && ufw allow 30000:32767/tcp && ufw allow 8285,8472,4789,30000:32767/udp
+    when: ansible_os_family == "Debian"
+#Apply Rules
+  - name: apply rules
+    shell: ufw reload
+    when: ansible_os_family == "Debian"
+
+###########################################################       RedHat Block    #############################################################################################
+
+#Install firewalld 
+  - name: Configure OS family RedHat (Install firewalld)
+    yum:
+     name: firewalld
+     state: latest
+    when: ansible_os_family == "RedHat"
+#Start and enable service firewalld
+  - name: Configure OS family RedHat (Start firewalld)
+    service:
+     name: firewalld
+     state: started
+     enabled: yes
+    when: ansible_os_family == "RedHat"
+#Open TCP ports
+  - name: Configure OS family RedHat (open ports TCP)
+    shell: firewall-cmd --zone=public --add-port={{ item }}/tcp
+    loop: [22,80,443,179,5473,6443,8472,2376,8472,2379,2380,9099,10250,10251,10252,10254,"30000-32767"]
+    when: ansible_os_family == "RedHat"
+#Open UDP ports
+  - name: Configure OS family RedHat (open ports UDP)
+    shell: firewall-cmd --zone=public --add-port={{ item }}/udp
+    loop: [8285,8472,4789,"30000-32767"]
+    when: ansible_os_family == "RedHat"
+ #Reload and save configeure  
+  - name: Configure OS family RedHat ( Save configs)
+    shell: firewall-cmd --runtime-to-permanent && firewall-cmd --reload
+    when: ansible_os_family == "RedHat"
